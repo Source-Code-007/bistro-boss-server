@@ -1,5 +1,6 @@
 const express = require('express');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
+var jwt = require('jsonwebtoken');
 const cors = require('cors');
 const app = express()
 require("dotenv").config();
@@ -56,10 +57,25 @@ async function run() {
     })
 
     // add users
-    app.post('/users', async(req,res)=>{
+    app.post('/users', async (req, res) => {
       const user = req.body
       const result = await usersCollection.insertOne(user)
       res.send(result)
+    })
+
+    // get users
+    app.get('/users', async (req, res) => {
+      const result = await usersCollection.find().toArray()
+      res.send(result)
+    })
+
+    // add JWT 
+    app.post('/jwt', async (req, res) => {
+      const {user} = req.body
+      const token = jwt.sign({
+        data: user
+      }, process.env.JWT_SECRET_KEY);
+      res.send({token})
     })
 
     // add to cart route
@@ -68,29 +84,29 @@ async function run() {
       item.itemId = item._id
       delete item._id
 
-      const find = {email: req.query?.email, itemId: item.itemId}
+      const find = { email: req.query?.email, itemId: item.itemId }
       const existingItem = await cartItemCollection.findOne(find)
 
-      if(existingItem){
-        const options = {upsert: true}
+      if (existingItem) {
+        const options = { upsert: true }
         const updatedItem = {
           $set: {
-            ...existingItem, quantity: existingItem.quantity+=1
+            ...existingItem, quantity: existingItem.quantity += 1
           },
         };
         const result = await cartItemCollection.updateOne(find, updatedItem, options)
         res.send(result)
-      } else{
+      } else {
         item.quantity = 1
         const result = await cartItemCollection.insertOne(item)
-       res.send(result)
+        res.send(result)
       }
     })
 
     // delete item from cart
     app.delete(`/cart-item/:id`, async (req, res) => {
       const uniqueId = req.params.id
-      const find = {_id: new ObjectId(uniqueId)}
+      const find = { _id: new ObjectId(uniqueId) }
       const result = await cartItemCollection.deleteOne(find)
       res.send(result)
     })
