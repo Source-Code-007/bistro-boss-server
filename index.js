@@ -1,6 +1,7 @@
 const express = require('express');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 var jwt = require('jsonwebtoken');
+const jwtVerify = require('./jwtVerify') // for jwt verify
 const cors = require('cors');
 const app = express()
 require("dotenv").config();
@@ -13,7 +14,6 @@ app.use(express.json())
 app.get(('/'), (req, res) => {
   res.send('bistro boss server is perfectly running')
 })
-
 
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.iw4kl2c.mongodb.net/?retryWrites=true&w=majority`;
@@ -64,7 +64,7 @@ async function run() {
     })
 
     // get users
-    app.get('/users', async (req, res) => {
+    app.get('/users', jwtVerify, async (req, res) => {
       const result = await usersCollection.find().toArray()
       res.send(result)
     })
