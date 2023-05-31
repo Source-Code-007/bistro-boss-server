@@ -1,7 +1,7 @@
 const express = require('express');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 var jwt = require('jsonwebtoken');
-const jwtVerify = require('./jwtVerify') // for jwt verify
+const jwtVerify = require('./jwtVerify') // middleware to verify jwt
 const cors = require('cors');
 const app = express()
 require("dotenv").config();
@@ -63,9 +63,17 @@ async function run() {
       res.send(result)
     })
 
-    // get users
+    // get all users
     app.get('/users', jwtVerify, async (req, res) => {
       const result = await usersCollection.find().toArray()
+      res.send(result)
+    })
+
+    // delete single user via id
+    app.delete('/users/:id', jwtVerify, async (req, res) => {
+      const id = req.params.id
+      const find =  {_id : new ObjectId(id)}
+      const result = await usersCollection.deleteOne(find)
       res.send(result)
     })
 
