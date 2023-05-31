@@ -56,7 +56,7 @@ async function run() {
       res.send(result)
     })
 
-    // add users
+    // add users (when user signin then this route hit)
     app.post('/users', async (req, res) => {
       const user = req.body
       const result = await usersCollection.insertOne(user)
