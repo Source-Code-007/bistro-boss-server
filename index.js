@@ -57,6 +57,18 @@ async function run() {
       res.send(result)
     })
 
+    // for check admin or not
+    app.get('/isAdmin', async(req, res)=>{
+      const {email} = req.query
+      const user = await usersCollection.findOne({email: email})
+      let isAdmin = user.role === 'admin'
+      if(isAdmin){
+        res.send({isAdmin: true})
+      }else{
+        res.send({isAdmin: false})
+      }
+    })
+
     // add users (when user signin then this route hit)
     app.post('/users', async (req, res) => {
       const user = req.body
