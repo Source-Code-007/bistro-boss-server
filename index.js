@@ -1,7 +1,7 @@
 const express = require('express');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 var jwt = require('jsonwebtoken');
-const jwtVerify = require('./jwtVerify') // middleware to verify jwt
+const jwtVerify = require('./middleware/jwtVerify') // middleware to verify jwt
 const cors = require('cors');
 const app = express()
 require("dotenv").config();
@@ -14,6 +14,7 @@ app.use(express.json())
 app.get(('/'), (req, res) => {
   res.send('bistro boss server is perfectly running')
 })
+
 
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.iw4kl2c.mongodb.net/?retryWrites=true&w=majority`;
@@ -40,7 +41,20 @@ async function run() {
     const cartItemCollection = bistroBossDB.collection('cart-item-collection')
     const usersCollection = bistroBossDB.collection('users-collection')
 
-    
+
+    // admin verify middleware
+    const adminVerify = async (req, res, next) => {
+      const  email  = req.decoded.email
+      console.log(email);
+      const user = await usersCollection.findOne({ email: email })
+      let isAdmin = user?.role === 'admin'
+      if (isAdmin) {
+        next()
+      } else {
+       return res.status(403).send({ message: 'unauthorized status' })
+      }
+    }
+
     // Get all menu
     app.get('/menu-collection', async (req, res) => {
       const result = await menuCollection.find({}).toArray()
@@ -58,14 +72,14 @@ async function run() {
     })
 
     // for check admin or not
-    app.get('/isAdmin', async(req, res)=>{
-      const {email} = req.query
-      const user = await usersCollection.findOne({email: email})
-      let isAdmin = user.role === 'admin'
-      if(isAdmin){
-        res.send({isAdmin: true})
-      }else{
-        res.send({isAdmin: false})
+    app.get('/isAdmin', async (req, res) => {
+      const { email } = req.query
+      const user = await usersCollection.findOne({ email: email })
+      let isAdmin = user?.role === 'admin'
+      if (isAdmin) {
+        res.send({ isAdmin: true })
+      } else {
+        res.send({ isAdmin: false })
       }
     })
 
@@ -77,7 +91,7 @@ async function run() {
     })
 
     // get all users
-    app.get('/users', jwtVerify, async (req, res) => {
+    app.get('/users', jwtVerify, adminVerify, async (req, res) => {
       const result = await usersCollection.find().toArray()
       res.send(result)
     })
@@ -85,18 +99,18 @@ async function run() {
     // delete single user via id
     app.delete('/users/:id', jwtVerify, async (req, res) => {
       const id = req.params.id
-      const find =  {_id : new ObjectId(id)}
+      const find = { _id: new ObjectId(id) }
       const result = await usersCollection.deleteOne(find)
       res.send(result)
     })
 
     // add JWT 
     app.post('/jwt', async (req, res) => {
-      const {user} = req.body
+      const { email } = req.body
       const token = jwt.sign({
-        data: user
+        email: email
       }, process.env.JWT_SECRET_KEY);
-      res.send({token})
+      res.send({ token })
     })
 
     // add to cart route
