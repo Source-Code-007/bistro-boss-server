@@ -1,10 +1,11 @@
+require("dotenv").config();
 const express = require('express');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 var jwt = require('jsonwebtoken');
 const jwtVerify = require('./middleware/jwtVerify') // middleware to verify jwt
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY)
 const cors = require('cors');
 const app = express()
-require("dotenv").config();
 const port = process.env.PORT || 2500
 
 // middleware
@@ -45,13 +46,13 @@ async function run() {
 
     // admin verify middleware
     const adminVerify = async (req, res, next) => {
-      const  email  = req.decoded.email
+      const email = req.decoded.email
       const user = await usersCollection.findOne({ email: email })
       let isAdmin = user?.role === 'admin'
       if (isAdmin) {
         next()
       } else {
-       return res.status(403).send({ message: 'unauthorized status' })
+        return res.status(403).send({ message: 'unauthorized status' })
       }
     }
 
@@ -146,6 +147,24 @@ async function run() {
       res.send(result)
     })
 
+    // make payment route for stripe
+    app.post("/create-payment-intent", jwtVerify, async (req, res) => {
+      const { price } = req.body;
+      // Create a PaymentIntent with the order amount and currency
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: price,
+        currency: "usd",
+        // payment_method: 'card',
+        automatic_payment_methods: {
+          enabled: true,
+        },
+      });
+
+      res.send({
+        clientSecret: paymentIntent.client_secret,
+      });
+    });
+
 
   } finally {
     // Ensures that the client will close when you finish/error
@@ -153,6 +172,7 @@ async function run() {
   }
 }
 run().catch(console.dir);
+
 
 
 app.listen(port, () => {
