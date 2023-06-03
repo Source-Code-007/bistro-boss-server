@@ -17,7 +17,8 @@ app.get(('/'), (req, res) => {
 
 
 
-const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.iw4kl2c.mongodb.net/?retryWrites=true&w=majority`;
+// const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.iw4kl2c.mongodb.net/?retryWrites=true&w=majority`;
+const uri = `mongodb://${process.env.DB_USER}:${process.env.DB_PASS}@ac-sdycgbe-shard-00-00.iw4kl2c.mongodb.net:27017,ac-sdycgbe-shard-00-01.iw4kl2c.mongodb.net:27017,ac-sdycgbe-shard-00-02.iw4kl2c.mongodb.net:27017/?ssl=true&replicaSet=atlas-12xt4i-shard-0&authSource=admin&retryWrites=true&w=majority`
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(uri, {
@@ -45,7 +46,6 @@ async function run() {
     // admin verify middleware
     const adminVerify = async (req, res, next) => {
       const  email  = req.decoded.email
-      console.log(email);
       const user = await usersCollection.findOne({ email: email })
       let isAdmin = user?.role === 'admin'
       if (isAdmin) {
