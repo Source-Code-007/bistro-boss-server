@@ -150,12 +150,12 @@ async function run() {
 
 
 
-    // stored payment information
-    app.post('/payment-info', jwtVerify, adminVerify, async(req, res)=>{
-        const {payment} = req.body
-        const res = await paymentCollection.insertOne(payment)
-        res.send(res)
-    })
+    // stored payment information in database
+    // app.post('/payment-info', jwtVerify, async(req, res)=>{
+    //     const {paymentInfo} = req.body
+    //     const result = await paymentCollection.insertOne(paymentInfo)
+    //     res.send(result)
+    // })
 
     // make payment route for stripe
     app.post("/create-payment-intent", jwtVerify, async (req, res) => {
