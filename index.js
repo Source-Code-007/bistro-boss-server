@@ -150,19 +150,17 @@ async function run() {
     // make payment route for stripe
     app.post("/create-payment-intent", jwtVerify, async (req, res) => {
       const { price } = req.body;
+
       // Create a PaymentIntent with the order amount and currency
       const paymentIntent = await stripe.paymentIntents.create({
         amount: price,
-        currency: "usd",
-        // payment_method: 'card',
-        automatic_payment_methods: {
-          enabled: true,
-        },
+        currency: 'usd',
+        payment_method_types: ['card']
       });
 
       res.send({
-        clientSecret: paymentIntent.client_secret,
-      });
+        clientSecret: paymentIntent.client_secret
+      })
     });
 
 
