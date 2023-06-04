@@ -42,6 +42,7 @@ async function run() {
     const menuCollection = bistroBossDB.collection('menu-collection')
     const cartItemCollection = bistroBossDB.collection('cart-item-collection')
     const usersCollection = bistroBossDB.collection('users-collection')
+    const paymentCollection = bistroBossDB.collection('payment-collection')
 
 
     // admin verify middleware
@@ -147,10 +148,18 @@ async function run() {
       res.send(result)
     })
 
+
+
+    // stored payment information
+    app.post('/payment-info', jwtVerify, adminVerify, async(req, res)=>{
+        const {payment} = req.body
+        const res = await paymentCollection.insertOne(payment)
+        res.send(res)
+    })
+
     // make payment route for stripe
     app.post("/create-payment-intent", jwtVerify, async (req, res) => {
       const { price } = req.body;
-
       // Create a PaymentIntent with the order amount and currency 
       const paymentIntent = await stripe.paymentIntents.create({
         amount: price,
