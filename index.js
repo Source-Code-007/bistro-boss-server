@@ -155,6 +155,41 @@ async function run() {
       res.send(result)
     })
 
+    
+    // user stats
+    app.get('/user-stats', jwtVerify, async(req,res)=>{
+      const {email} = req.query
+      try {
+        // Calculate total amount
+        const totalAmount = await paymentCollection.aggregate([
+            { $match: { email } },
+            { $group: { _id: null, totalAmount: { $sum: '$amount' } } },
+          ])
+          .toArray();
+    
+        // Calculate total menu items
+        const totalMenuItems = await paymentCollection.aggregate([
+            { $match: { email } },
+            { $group: { _id: null, totalMenuItems: { $sum: { $size: '$menusId' } } } },
+          ])
+          .toArray();
+    
+        // Count total orders
+        const totalOrders = await paymentCollection.countDocuments({ email });
+    
+        const userStats = {
+          totalAmount: totalAmount.length ? totalAmount[0].totalAmount : 0,
+          totalMenuItems: totalMenuItems.length ? totalMenuItems[0].totalMenuItems : 0,
+          totalOrders: totalOrders,
+        };
+    
+        res.json(userStats);
+      } catch (error) {
+        console.error('Error calculating user stats:', error);
+        res.status(500).send('Error calculating user stats');
+      }
+    })
+
 
     // stored payment information in database
     app.post('/payment-info', jwtVerify, async (req, res) => {
