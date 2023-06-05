@@ -150,12 +150,10 @@ async function run() {
 
     // reset specific user cart after successful payment
     app.delete('/cart-reset', jwtVerify, async(req,res)=>{
-      const {email} = req.body
-      console.log(req.body);
+      const {email} = req.query
       const result = await cartItemCollection.deleteMany({email})
       res.send(result)
     })
-
 
 
     // stored payment information in database
