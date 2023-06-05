@@ -148,21 +148,39 @@ async function run() {
       res.send(result)
     })
 
+    // reset specific user cart after successful payment
+    app.delete('/cart-reset', jwtVerify, async(req,res)=>{
+      const {email} = req.body
+      console.log(req.body);
+      const result = await cartItemCollection.deleteMany({email})
+      res.send(result)
+    })
+
 
 
     // stored payment information in database
-    // app.post('/payment-info', jwtVerify, async(req, res)=>{
-    //     const {paymentInfo} = req.body
-    //     const result = await paymentCollection.insertOne(paymentInfo)
-    //     res.send(result)
-    // })
+    app.post('/payment-info', jwtVerify, async (req, res) => {
+      const { paymentInfo } = req.body
+      const result = await paymentCollection.insertOne(paymentInfo)
+      res.send(result)
+    })
+
+    // get payment info from database
+    app.get('/payment-info', jwtVerify, async(req,res)=>{
+      const {email} = req.query
+      const find = {email: email}
+      const result = await paymentCollection.find(find).toArray()
+      res.send(result)
+    })
 
     // make payment route for stripe
     app.post("/create-payment-intent", jwtVerify, async (req, res) => {
       const { price } = req.body;
+      const amount = parseFloat(price) * 100
+
       // Create a PaymentIntent with the order amount and currency 
       const paymentIntent = await stripe.paymentIntents.create({
-        amount: price,
+        amount: amount,
         currency: 'usd',
         payment_method_types: ['card']
       });
