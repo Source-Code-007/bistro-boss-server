@@ -179,7 +179,12 @@ async function run() {
 
 
 
-    // admin management
+    // admin management ###
+    // admin stats
+    app.get('/admin-stats', jwtVerify, adminVerify, async (req, res)=>{
+      
+    })
+
     // get all users
     app.get('/users', jwtVerify, adminVerify, async (req, res) => {
       const result = await usersCollection.find().toArray()
@@ -187,22 +192,19 @@ async function run() {
     })
 
     // delete single user via id
-    app.delete('/users/:id', jwtVerify, async (req, res) => {
+    app.delete('/users/:id', jwtVerify, adminVerify, async (req, res) => {
       const id = req.params.id
       const find = { _id: new ObjectId(id) }
       const result = await usersCollection.deleteOne(find)
       res.send(result)
     })
 
-
-    // make admin 
-    app.patch('/make-role/:id', async (req, res) => {
+    // give role (make admin or user)
+    app.patch('/make-role/:id', jwtVerify, adminVerify, async (req, res) => {
       const id = req.params.id
       const {role} = req.body
       const updatedRole = role === 'admin' ? 'user' : (role === 'user' ? 'admin' : 'user');
       const find = { _id: new ObjectId(id) }
-      console.log(role);
-      console.log(updatedRole);
       const updatedDoc = {
         $set: {
           role: updatedRole
@@ -214,14 +216,14 @@ async function run() {
 
 
     // stored payment information in database
-    app.post('/payment-info', jwtVerify, async (req, res) => {
+    app.post('/payment-info', jwtVerify, adminVerify, async (req, res) => {
       const { paymentInfo } = req.body
       const result = await paymentCollection.insertOne(paymentInfo)
       res.send(result)
     })
 
     // get payment info from database
-    app.get('/payment-info', jwtVerify, async (req, res) => {
+    app.get('/payment-info', jwtVerify, adminVerify, async (req, res) => {
       const { email } = req.query
       const find = { email: email }
       const result = await paymentCollection.find(find).toArray()
