@@ -5,7 +5,7 @@ const jwtVerify = (req, res, next)=>{
     if(!token){
         return res.status(401).send({message: 'no token provided'})
     }
-    const tokenCheck = (req.headers.authorization).split(' ')[1]
+    const tokenCheck = token.split(' ')[1]
 
     jwt.verify(tokenCheck, process.env.JWT_SECRET_KEY, (err, decoded)=>{
      if(err){

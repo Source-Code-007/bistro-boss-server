@@ -92,19 +92,6 @@ async function run() {
       res.send(result)
     })
 
-    // get all users
-    app.get('/users', jwtVerify, adminVerify, async (req, res) => {
-      const result = await usersCollection.find().toArray()
-      res.send(result)
-    })
-
-    // delete single user via id
-    app.delete('/users/:id', jwtVerify, async (req, res) => {
-      const id = req.params.id
-      const find = { _id: new ObjectId(id) }
-      const result = await usersCollection.deleteOne(find)
-      res.send(result)
-    })
 
     // add JWT 
     app.post('/jwt', async (req, res) => {
@@ -149,45 +136,80 @@ async function run() {
     })
 
     // reset specific user cart after successful payment
-    app.delete('/cart-reset', jwtVerify, async(req,res)=>{
-      const {email} = req.query
-      const result = await cartItemCollection.deleteMany({email})
+    app.delete('/cart-reset', jwtVerify, async (req, res) => {
+      const { email } = req.query
+      const result = await cartItemCollection.deleteMany({ email })
       res.send(result)
     })
 
-    
+
     // user stats
-    app.get('/user-stats', jwtVerify, async(req,res)=>{
-      const {email} = req.query
+    app.get('/user-stats', jwtVerify, async (req, res) => {
+      const { email } = req.query
       try {
         // Calculate total amount
         const totalAmount = await paymentCollection.aggregate([
-            { $match: { email } },
-            { $group: { _id: null, totalAmount: { $sum: '$amount' } } },
-          ])
+          { $match: { email } },
+          { $group: { _id: null, totalAmount: { $sum: '$amount' } } },
+        ])
           .toArray();
-    
+
         // Calculate total menu items
         const totalMenuItems = await paymentCollection.aggregate([
-            { $match: { email } },
-            { $group: { _id: null, totalMenuItems: { $sum: { $size: '$menusId' } } } },
-          ])
+          { $match: { email } },
+          { $group: { _id: null, totalMenuItems: { $sum: { $size: '$menusId' } } } },
+        ])
           .toArray();
-    
+
         // Count total orders
         const totalOrders = await paymentCollection.countDocuments({ email });
-    
+
         const userStats = {
           totalAmount: totalAmount.length ? totalAmount[0].totalAmount : 0,
           totalMenuItems: totalMenuItems.length ? totalMenuItems[0].totalMenuItems : 0,
           totalOrders: totalOrders,
         };
-    
+
         res.json(userStats);
       } catch (error) {
         console.error('Error calculating user stats:', error);
         res.status(500).send('Error calculating user stats');
       }
+    })
+
+
+
+    // admin management
+    // get all users
+    app.get('/users', jwtVerify, adminVerify, async (req, res) => {
+      const result = await usersCollection.find().toArray()
+      res.send(result)
+    })
+
+    // delete single user via id
+    app.delete('/users/:id', jwtVerify, async (req, res) => {
+      const id = req.params.id
+      const find = { _id: new ObjectId(id) }
+      const result = await usersCollection.deleteOne(find)
+      res.send(result)
+    })
+
+
+    // make admin 
+    app.patch('/make-role/:id', async (req, res) => {
+      const id = req.params.id
+      const {role} = req.body
+      const updatedRole = role === 'admin' ? 'user' : (role === 'user' ? 'admin' : 'user');
+      const find = { _id: new ObjectId(id) }
+      console.log(role);
+      console.log(updatedRole);
+      const updatedDoc = {
+        $set: {
+          role: updatedRole
+        },
+      }
+      const result = usersCollection.updateOne(find, updatedDoc)
+      res.send(result)
     })
 
 
@@ -199,9 +221,9 @@ async function run() {
     })
 
     // get payment info from database
-    app.get('/payment-info', jwtVerify, async(req,res)=>{
-      const {email} = req.query
-      const find = {email: email}
+    app.get('/payment-info', jwtVerify, async (req, res) => {
+      const { email } = req.query
+      const find = { email: email }
       const result = await paymentCollection.find(find).toArray()
       res.send(result)
     })
